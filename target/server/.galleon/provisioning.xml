@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<installation xmlns="urn:jboss:galleon:provisioning:4.0">&#xd;
+    <feature-pack location="wildfly@maven(org.jboss.universe:community-universe):current#40.0.1.Final">&#xd;
+        <default-configs inherit="true"/>&#xd;
+        <packages inherit="true"/>&#xd;
+    </feature-pack>&#xd;
+    <options>&#xd;
+        <option name="jboss-fork-embedded" value="true"/>&#xd;
+    </options>&#xd;
+</installation>
