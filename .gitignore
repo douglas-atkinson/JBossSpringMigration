@@ -15,11 +15,19 @@ out/
 *.swp
 *.swo
 *~
+*.tmp
+*.temp
+
+# VS Code
 .vscode/
 
 # Logs
 *.log
 logs/
+
+# Environment files
+.env
+.env.*
 
 # OS-generated files
 .DS_Store
