@@ -21,6 +21,9 @@ out/
 # VS Code
 .vscode/
 
+# Claude Code local tooling config
+.claude/
+
 # Logs
 *.log
 logs/
