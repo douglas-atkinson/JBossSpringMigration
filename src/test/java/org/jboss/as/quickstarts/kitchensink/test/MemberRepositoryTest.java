@@ -17,85 +17,36 @@
 package org.jboss.as.quickstarts.kitchensink.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
-import java.lang.reflect.Field;
 import java.util.List;
-import java.util.logging.Logger;
-
-import jakarta.enterprise.event.Event;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.NoResultException;
-import jakarta.persistence.Persistence;
+import java.util.Optional;
 
 import org.jboss.as.quickstarts.kitchensink.data.MemberRepository;
 import org.jboss.as.quickstarts.kitchensink.model.Member;
-import org.jboss.as.quickstarts.kitchensink.service.MemberRegistration;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
 /**
- * Characterization tests for {@link MemberRepository}, run as a plain JUnit 5 test against a
- * standalone (non-container, RESOURCE_LOCAL) Hibernate/H2 persistence unit - see
- * src/test/resources/META-INF/persistence.xml. No Arquillian, ShrinkWrap, or running
- * JBoss/WildFly instance is involved; MemberRepository and MemberRegistration are constructed
- * directly here, with their {@code @Inject} fields set via reflection instead of a DI container.
+ * Characterization tests for {@link MemberRepository}, now a Spring Data JPA repository
+ * interface. {@code @DataJpaTest} auto-configures an embedded H2 database and a real
+ * implementation of the repository - no Arquillian, no hand-rolled EntityManager bootstrap, no
+ * container of any kind.
+ *
+ * <p>Note the behavioral change from the pre-migration version: {@code findByEmail} now returns
+ * an empty {@link Optional} for an unknown email instead of throwing JPA's
+ * {@code NoResultException} - that exception-based "not found" signal was always a JPA/Hibernate
+ * implementation detail, and Spring Data's Optional-based idiom is what
+ * {@link MemberResourceRESTService#emailAlreadyExists} now relies on.</p>
  */
+@DataJpaTest
 class MemberRepositoryTest {
 
-    private static EntityManagerFactory entityManagerFactory;
-
-    private EntityManager entityManager;
+    @Autowired
     private MemberRepository memberRepository;
-    private MemberRegistration memberRegistration;
-
-    @BeforeAll
-    static void createEntityManagerFactory() {
-        entityManagerFactory = Persistence.createEntityManagerFactory("kitchensinkTest");
-    }
-
-    @AfterAll
-    static void closeEntityManagerFactory() {
-        entityManagerFactory.close();
-    }
-
-    @BeforeEach
-    void setUp() throws Exception {
-        entityManager = entityManagerFactory.createEntityManager();
-
-        memberRepository = new MemberRepository();
-        setField(memberRepository, "em", entityManager);
-
-        memberRegistration = new MemberRegistration();
-        setField(memberRegistration, "em", entityManager);
-        setField(memberRegistration, "log", Logger.getLogger(MemberRegistration.class.getName()));
-        setField(memberRegistration, "memberEventSrc", Mockito.mock(Event.class));
-    }
-
-    @AfterEach
-    void tearDown() {
-        entityManager.close();
-    }
-
-    private static void setField(Object target, String fieldName, Object value) throws Exception {
-        Field field = target.getClass().getDeclaredField(fieldName);
-        field.setAccessible(true);
-        field.set(target, value);
-    }
-
-    private void register(Member member) throws Exception {
-        entityManager.getTransaction().begin();
-        memberRegistration.register(member);
-        entityManager.getTransaction().commit();
-    }
 
     private static Member validMember(String name, String email, String phoneNumber) {
         Member member = new Member();
@@ -106,45 +57,47 @@ class MemberRepositoryTest {
     }
 
     @Test
-    void findById_withExistingId_returnsMember() throws Exception {
-        Member member = validMember("Gina Gettable", "gina.gettable@mailinator.com", "2125550001");
-        register(member);
+    void findById_withExistingId_returnsMember() {
+        Member member = memberRepository.save(validMember("Gina Gettable", "gina.gettable@mailinator.com", "2125550001"));
 
-        Member found = memberRepository.findById(member.getId());
+        Optional<Member> found = memberRepository.findById(member.getId());
 
-        assertEquals(member.getEmail(), found.getEmail());
+        assertTrue(found.isPresent());
+        assertEquals(member.getEmail(), found.get().getEmail());
     }
 
     @Test
-    void findById_withUnknownId_returnsNull() {
-        Member found = memberRepository.findById(999999999L);
+    void findById_withUnknownId_returnsEmpty() {
+        Optional<Member> found = memberRepository.findById(999999999L);
 
-        assertNull(found);
+        assertFalse(found.isPresent());
     }
 
     @Test
-    void findByEmail_withExistingEmail_returnsMember() throws Exception {
+    void findByEmail_withExistingEmail_returnsMember() {
         String email = "harry.hittable@mailinator.com";
-        register(validMember("Harry Hittable", email, "2125550002"));
+        memberRepository.save(validMember("Harry Hittable", email, "2125550002"));
 
-        Member found = memberRepository.findByEmail(email);
+        Optional<Member> found = memberRepository.findByEmail(email);
 
-        assertEquals(email, found.getEmail());
+        assertTrue(found.isPresent());
+        assertEquals(email, found.get().getEmail());
     }
 
     @Test
-    void findByEmail_withUnknownEmail_throwsNoResultException() {
-        assertThrows(NoResultException.class,
-                () -> memberRepository.findByEmail("nobody.missing@mailinator.com"));
+    void findByEmail_withUnknownEmail_returnsEmpty() {
+        Optional<Member> found = memberRepository.findByEmail("nobody.missing@mailinator.com");
+
+        assertFalse(found.isPresent());
     }
 
     @Test
-    void findAllOrderedByName_returnsResultsSortedByName() throws Exception {
-        register(validMember("Zoe Sortable", "zoe.sortable@mailinator.com", "2125550003"));
-        register(validMember("Abby Sortable", "abby.sortable@mailinator.com", "2125550004"));
-        register(validMember("Mona Sortable", "mona.sortable@mailinator.com", "2125550005"));
+    void findAllByOrderByNameAsc_returnsResultsSortedByName() {
+        memberRepository.save(validMember("Zoe Sortable", "zoe.sortable@mailinator.com", "2125550003"));
+        memberRepository.save(validMember("Abby Sortable", "abby.sortable@mailinator.com", "2125550004"));
+        memberRepository.save(validMember("Mona Sortable", "mona.sortable@mailinator.com", "2125550005"));
 
-        List<Member> members = memberRepository.findAllOrderedByName();
+        List<Member> members = memberRepository.findAllByOrderByNameAsc();
 
         int abbyIndex = indexOfEmail(members, "abby.sortable@mailinator.com");
         int monaIndex = indexOfEmail(members, "mona.sortable@mailinator.com");

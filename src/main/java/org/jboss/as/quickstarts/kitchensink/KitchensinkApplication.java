@@ -14,35 +14,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.as.quickstarts.kitchensink.util;
+package org.jboss.as.quickstarts.kitchensink;
 
-import java.util.logging.Logger;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-import jakarta.enterprise.inject.Produces;
-import jakarta.enterprise.inject.spi.InjectionPoint;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
+@SpringBootApplication
+public class KitchensinkApplication {
 
-/**
- * This class uses CDI to alias Jakarta EE resources, such as the persistence context, to CDI beans
- *
- * <p>
- * Example injection on a managed bean field:
- * </p>
- *
- * <pre>
- * &#064;Inject
- * private EntityManager em;
- * </pre>
- */
-public class Resources {
-    @Produces
-    @PersistenceContext
-    private EntityManager em;
-
-    @Produces
-    public Logger produceLog(InjectionPoint injectionPoint) {
-        return Logger.getLogger(injectionPoint.getMember().getDeclaringClass().getName());
+    public static void main(String[] args) {
+        SpringApplication.run(KitchensinkApplication.class, args);
     }
-
 }
