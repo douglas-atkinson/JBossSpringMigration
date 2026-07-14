@@ -202,7 +202,7 @@
 
         <!-- Managed container adapter so Arquillian can start/stop a local WildFly/EAP instance
              (pointed at by src/test/resources/arquillian.xml's jbossHome property) around the
-             in-container tests (MemberRegistrationIT, MemberResourceRESTServiceIT, etc.) -->
+             in-container tests (MemberResourceRESTServiceIT, MemberRepositoryIT, etc.) -->
         <dependency>
             <groupId>org.wildfly.arquillian</groupId>
             <artifactId>wildfly-arquillian-container-managed</artifactId>
@@ -282,9 +282,6 @@
                             <includes>
                                 <include>**/RemoteMemberRegistrationIT</include>
                             </includes>
-                            <excludes>
-                                <exclude>**/MemberRegistrationIT</exclude>
-                            </excludes>
                         </configuration>
                         <executions>
                             <execution>
