@@ -16,6 +16,8 @@
  */
 package org.jboss.as.quickstarts.kitchensink.test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
 
@@ -28,10 +30,9 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
 import org.jboss.as.quickstarts.kitchensink.model.Member;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class RemoteMemberRegistrationIT {
+class RemoteMemberRegistrationIT {
 
     private static final Logger log = Logger.getLogger(RemoteMemberRegistrationIT.class.getName());
 
@@ -56,7 +57,7 @@ public class RemoteMemberRegistrationIT {
     }
 
     @Test
-    public void testRegister() throws Exception {
+    void testRegister() throws Exception {
         Member newMember = new Member();
         newMember.setName("Jane Doe");
         newMember.setEmail("jane@mailinator.com");
@@ -70,8 +71,8 @@ public class RemoteMemberRegistrationIT {
                 .POST(HttpRequest.BodyPublishers.ofString(json.toString()))
                 .build();
         HttpResponse response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-        Assert.assertEquals(200, response.statusCode());
-        Assert.assertEquals("", response.body().toString() );
+        assertEquals(200, response.statusCode());
+        assertEquals("", response.body().toString());
     }
 
 }

@@ -16,7 +16,7 @@
  */
 package org.jboss.as.quickstarts.kitchensink.test;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Set;
 
@@ -27,9 +27,9 @@ import jakarta.validation.ValidatorFactory;
 
 import org.hibernate.validator.messageinterpolation.ParameterMessageInterpolator;
 import org.jboss.as.quickstarts.kitchensink.model.Member;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 /**
  * Characterization tests for the Bean Validation constraints declared on {@link Member}, run
@@ -37,13 +37,13 @@ import org.junit.Test;
  * These pin the exact boundaries (min/max lengths, digit counts, pattern rules) so the same
  * constraints can be verified after the Spring Boot migration.
  */
-public class MemberValidationTest {
+class MemberValidationTest {
 
     private static ValidatorFactory validatorFactory;
     private static Validator validator;
 
-    @BeforeClass
-    public static void createValidator() {
+    @BeforeAll
+    static void createValidator() {
         // The default message interpolator requires a Jakarta EL implementation, which is
         // normally supplied by the JBoss EAP container at runtime but isn't on the classpath
         // for a standalone unit test. ParameterMessageInterpolator avoids that dependency;
@@ -55,8 +55,8 @@ public class MemberValidationTest {
         validator = validatorFactory.getValidator();
     }
 
-    @AfterClass
-    public static void closeValidatorFactory() {
+    @AfterAll
+    static void closeValidatorFactory() {
         validatorFactory.close();
     }
 
@@ -80,103 +80,103 @@ public class MemberValidationTest {
 
     private <T> void assertHasViolation(String property, T bean) {
         Set<ConstraintViolation<T>> violations = validator.validateProperty(bean, property);
-        assertTrue("expected a violation on '" + property + "' but found none", !violations.isEmpty());
+        assertTrue(!violations.isEmpty(), "expected a violation on '" + property + "' but found none");
     }
 
     private <T> void assertNoViolations(String property, T bean) {
         Set<ConstraintViolation<T>> violations = validator.validateProperty(bean, property);
-        assertTrue("expected no violations on '" + property + "' but found: " + violations, violations.isEmpty());
+        assertTrue(violations.isEmpty(), "expected no violations on '" + property + "' but found: " + violations);
     }
 
     // --- name ---
 
     @Test
-    public void name_null_isRejected() {
+    void name_null_isRejected() {
         assertHasViolation("name", memberWithName(null));
     }
 
     @Test
-    public void name_empty_isRejected() {
+    void name_empty_isRejected() {
         assertHasViolation("name", memberWithName(""));
     }
 
     @Test
-    public void name_containingDigits_isRejected() {
+    void name_containingDigits_isRejected() {
         assertHasViolation("name", memberWithName("John3"));
     }
 
     @Test
-    public void name_atMaxLength_isAccepted() {
+    void name_atMaxLength_isAccepted() {
         // exactly 25 characters
         assertNoViolations("name", memberWithName("Abcdefghijklmnopqrstuvwxy"));
     }
 
     @Test
-    public void name_overMaxLength_isRejected() {
+    void name_overMaxLength_isRejected() {
         // 26 characters
         assertHasViolation("name", memberWithName("Abcdefghijklmnopqrstuvwxyz"));
     }
 
     @Test
-    public void name_validAlphabeticName_isAccepted() {
+    void name_validAlphabeticName_isAccepted() {
         assertNoViolations("name", memberWithName("Jane Doe"));
     }
 
     // --- email ---
 
     @Test
-    public void email_null_isRejected() {
+    void email_null_isRejected() {
         assertHasViolation("email", memberWithEmail(null));
     }
 
     @Test
-    public void email_empty_isRejected() {
+    void email_empty_isRejected() {
         assertHasViolation("email", memberWithEmail(""));
     }
 
     @Test
-    public void email_malformed_isRejected() {
+    void email_malformed_isRejected() {
         assertHasViolation("email", memberWithEmail("not-an-email"));
     }
 
     @Test
-    public void email_wellFormed_isAccepted() {
+    void email_wellFormed_isAccepted() {
         assertNoViolations("email", memberWithEmail("jane@mailinator.com"));
     }
 
     // --- phoneNumber ---
 
     @Test
-    public void phoneNumber_null_isRejected() {
+    void phoneNumber_null_isRejected() {
         assertHasViolation("phoneNumber", memberWithPhoneNumber(null));
     }
 
     @Test
-    public void phoneNumber_underMinLength_isRejected() {
+    void phoneNumber_underMinLength_isRejected() {
         // 9 digits
         assertHasViolation("phoneNumber", memberWithPhoneNumber("212555121"));
     }
 
     @Test
-    public void phoneNumber_atMinLength_isAccepted() {
+    void phoneNumber_atMinLength_isAccepted() {
         // exactly 10 digits
         assertNoViolations("phoneNumber", memberWithPhoneNumber("2125551212"));
     }
 
     @Test
-    public void phoneNumber_atMaxLength_isAccepted() {
+    void phoneNumber_atMaxLength_isAccepted() {
         // exactly 12 digits
         assertNoViolations("phoneNumber", memberWithPhoneNumber("212555121234"));
     }
 
     @Test
-    public void phoneNumber_overMaxLength_isRejected() {
+    void phoneNumber_overMaxLength_isRejected() {
         // 13 digits
         assertHasViolation("phoneNumber", memberWithPhoneNumber("2125551212345"));
     }
 
     @Test
-    public void phoneNumber_containingNonDigits_isRejected() {
+    void phoneNumber_containingNonDigits_isRejected() {
         assertHasViolation("phoneNumber", memberWithPhoneNumber("212-555-1212"));
     }
 }

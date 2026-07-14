@@ -131,10 +131,35 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- Needed for running tests (you may also use TestNG) -->
+        <!-- JUnit 5 (Jupiter). Pinned to the 5.x line (not the newer major 6.x) since that's
+             what the project's pinned, older maven-failsafe/surefire-plugin (2.22.2) is broadly
+             known to work with via its JUnit 5 provider auto-detection. -->
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.11.4</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Mockito, used to isolate the REST layer from persistence in MemberResourceRESTServiceTest -->
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>5.23.0</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Hibernate ORM + H2 driver as real (not container-provided) test dependencies, so
+             MemberRepositoryTest can bootstrap a standalone, non-JTA persistence unit without a
+             running JBoss/WildFly instance. See src/test/resources/META-INF/persistence.xml. -->
+        <dependency>
+            <groupId>org.hibernate.orm</groupId>
+            <artifactId>hibernate-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
             <scope>test</scope>
         </dependency>
 
@@ -183,30 +208,6 @@
             <groupId>jakarta.persistence</groupId>
             <artifactId>jakarta.persistence-api</artifactId>
             <scope>provided</scope>
-        </dependency>
-
-        <!-- Optional, but highly recommended -->
-        <!-- Arquillian allows you to test enterprise code such as EJBs and Transactional(JTA)
-        JPA from JUnit/TestNG -->
-        <dependency>
-            <groupId>org.jboss.arquillian.junit</groupId>
-            <artifactId>arquillian-junit-container</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jboss.arquillian.protocol</groupId>
-            <artifactId>arquillian-protocol-servlet-jakarta</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <!-- Managed container adapter so Arquillian can start/stop a local WildFly/EAP instance
-             (pointed at by src/test/resources/arquillian.xml's jbossHome property) around the
-             in-container tests (MemberResourceRESTServiceIT, MemberRepositoryIT, etc.) -->
-        <dependency>
-            <groupId>org.wildfly.arquillian</groupId>
-            <artifactId>wildfly-arquillian-container-managed</artifactId>
-            <scope>test</scope>
         </dependency>
 
         <!-- Import the Common Annotations API (JSR-250), we use provided scope
@@ -258,20 +259,25 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- jakarta.ws.rs-api is provided (API only); a real JAX-RS RuntimeDelegate is normally
+             supplied by the JBoss EAP container so that MemberResourceRESTService's use of
+             Response/WebApplicationException works at runtime. For a standalone JUnit 5 test,
+             pull in Jersey (Eclipse/Glassfish's JAX-RS implementation) instead of JBoss's
+             RESTEasy, to keep the test dependency tree JBoss-agnostic. -->
+        <dependency>
+            <groupId>org.glassfish.jersey.core</groupId>
+            <artifactId>jersey-common</artifactId>
+            <version>3.1.12</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
     <profiles>
         <profile>
-            <!-- An optional Arquillian testing profile that executes tests in a remote JBoss EAP instance.
-            Run with: mvn clean verify -Parq-remote -->
+            <!-- Runs RemoteMemberRegistrationIT (a plain HTTP client test) against an already
+            running, separately deployed server. Run with: mvn clean verify -Parq-remote -->
             <id>arq-remote</id>
-            <dependencies>
-                <dependency>
-                    <groupId>org.wildfly.arquillian</groupId>
-                    <artifactId>wildfly-arquillian-container-remote</artifactId>
-                    <scope>test</scope>
-                </dependency>
-            </dependencies>
             <build>
                 <plugins>
                     <plugin>
