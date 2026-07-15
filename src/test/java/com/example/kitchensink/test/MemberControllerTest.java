@@ -18,6 +18,7 @@ package com.example.kitchensink.test;
 
 import static org.hamcrest.Matchers.empty;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -39,6 +40,7 @@ import com.example.kitchensink.service.MemberRegistration;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -138,5 +140,25 @@ class MemberControllerTest {
                 .andExpect(model().attributeHasFieldErrors("newMember", "email"));
 
         verify(memberRegistrationMock, never()).register(any(Member.class));
+    }
+
+    @Test
+    void register_withConcurrentDuplicateEmail_redisplaysFormWithEmailTakenError() throws Exception {
+        // emailAlreadyExists finds nothing (no prior registration yet), but a concurrent request
+        // wins the race and registers the same email first, so the save itself hits the unique
+        // index and MemberRegistration surfaces that as a DuplicateKeyException.
+        String email = "dana.race@mailinator.com";
+        when(memberRepositoryMock.findByEmail(email)).thenReturn(Optional.empty());
+        when(memberRepositoryMock.findAllByOrderByNameAsc()).thenReturn(List.of());
+        doThrow(new DuplicateKeyException("E11000 duplicate key error"))
+                .when(memberRegistrationMock).register(any(Member.class));
+
+        mockMvc.perform(post("/register")
+                        .param("name", "Dana Racer")
+                        .param("email", email)
+                        .param("phoneNumber", "2125554444"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("registration"))
+                .andExpect(model().attributeHasFieldErrors("newMember", "email"));
     }
 }

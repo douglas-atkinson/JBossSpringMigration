@@ -21,6 +21,7 @@ import jakarta.validation.Valid;
 import com.example.kitchensink.data.MemberRepository;
 import com.example.kitchensink.model.Member;
 import com.example.kitchensink.service.MemberRegistration;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -63,14 +64,21 @@ public class MemberController {
             result.rejectValue("email", "duplicate", "Email taken");
         }
 
-        if (result.hasErrors()) {
-            model.addAttribute("members", memberRepository.findAllByOrderByNameAsc());
-            return "registration";
+        if (!result.hasErrors()) {
+            try {
+                memberRegistration.register(newMember);
+                redirectAttributes.addFlashAttribute("registeredMessage", "Registered!");
+                return "redirect:/";
+            } catch (DuplicateKeyException e) {
+                // Two concurrent requests can both pass the emailAlreadyExists check above; the
+                // unique index on Member.email is what actually catches the race, so treat it the
+                // same as the optimistic check finding the duplicate up front.
+                result.rejectValue("email", "duplicate", "Email taken");
+            }
         }
 
-        memberRegistration.register(newMember);
-        redirectAttributes.addFlashAttribute("registeredMessage", "Registered!");
-        return "redirect:/";
+        model.addAttribute("members", memberRepository.findAllByOrderByNameAsc());
+        return "registration";
     }
 
     private boolean emailAlreadyExists(String email) {

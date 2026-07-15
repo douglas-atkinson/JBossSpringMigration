@@ -32,6 +32,7 @@ import com.example.kitchensink.model.Member;
 import com.example.kitchensink.service.MemberRegistration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -93,10 +94,12 @@ public class MemberResourceRESTService {
             // Handle bean validation issues
             return createViolationResponse(ce.getConstraintViolations());
         } catch (ValidationException e) {
-            // Handle the unique constrain violation
-            Map<String, String> responseObj = new HashMap<>();
-            responseObj.put("email", "Email taken");
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(responseObj);
+            // Handle the unique constraint violation caught by the optimistic emailAlreadyExists check
+            return emailTakenResponse();
+        } catch (DuplicateKeyException e) {
+            // Two concurrent requests can both pass the emailAlreadyExists check in validateMember;
+            // the unique index on Member.email is what actually catches the race.
+            return emailTakenResponse();
         } catch (Exception e) {
             // Handle generic exceptions
             Map<String, String> responseObj = new HashMap<>();
@@ -150,6 +153,12 @@ public class MemberResourceRESTService {
         }
 
         return ResponseEntity.badRequest().body(responseObj);
+    }
+
+    private ResponseEntity<Object> emailTakenResponse() {
+        Map<String, String> responseObj = new HashMap<>();
+        responseObj.put("email", "Email taken");
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(responseObj);
     }
 
     /**

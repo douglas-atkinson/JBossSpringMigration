@@ -18,7 +18,9 @@ package com.example.kitchensink.test;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -38,6 +40,7 @@ import com.example.kitchensink.service.MemberRegistration;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -114,6 +117,22 @@ class MemberResourceRESTServiceTest {
         mockMvc.perform(post("/rest/members")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(duplicate)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.email").value("Email taken"));
+    }
+
+    @Test
+    void createMember_withConcurrentDuplicateEmail_returnsConflict() throws Exception {
+        // emailAlreadyExists finds nothing (no prior registration yet), but a concurrent request
+        // wins the race and registers the same email first, so the save itself hits the unique
+        // index and MemberRegistration surfaces that as a DuplicateKeyException.
+        Member member = validMember("Dana Racer", "dana.race@mailinator.com", "2125554444");
+        doThrow(new DuplicateKeyException("E11000 duplicate key error"))
+                .when(memberRegistrationMock).register(any(Member.class));
+
+        mockMvc.perform(post("/rest/members")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(member)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.email").value("Email taken"));
     }
