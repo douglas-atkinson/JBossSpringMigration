@@ -1,0 +1,44 @@
+# Maven build output
+target/
+
+# Compiled Java class files
+*.class
+
+# JetBrains IDE files
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# Common editor files
+*.swp
+*.swo
+*~
+*.tmp
+*.temp
+
+# VS Code
+.vscode/
+
+# Claude Code local tooling config
+.claude/
+
+# Logs
+*.log
+logs/
+
+# Environment files
+.env
+.env.*
+
+# OS-generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
