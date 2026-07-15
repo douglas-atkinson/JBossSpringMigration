@@ -14,12 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.as.quickstarts.kitchensink.data;
+package com.example.kitchensink.data;
 
 import java.util.List;
 import java.util.Optional;
 
-import org.jboss.as.quickstarts.kitchensink.model.Member;
+import com.example.kitchensink.model.Member;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface MemberRepository extends JpaRepository<Member, Long> {

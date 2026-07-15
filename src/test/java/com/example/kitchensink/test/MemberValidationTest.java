@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.as.quickstarts.kitchensink.test;
+package com.example.kitchensink.test;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -26,7 +26,7 @@ import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
 
 import org.hibernate.validator.messageinterpolation.ParameterMessageInterpolator;
-import org.jboss.as.quickstarts.kitchensink.model.Member;
+import com.example.kitchensink.model.Member;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;

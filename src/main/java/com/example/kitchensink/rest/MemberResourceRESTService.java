@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.as.quickstarts.kitchensink.rest;
+package com.example.kitchensink.rest;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -27,9 +27,9 @@ import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.ValidationException;
 import jakarta.validation.Validator;
 
-import org.jboss.as.quickstarts.kitchensink.data.MemberRepository;
-import org.jboss.as.quickstarts.kitchensink.model.Member;
-import org.jboss.as.quickstarts.kitchensink.service.MemberRegistration;
+import com.example.kitchensink.data.MemberRepository;
+import com.example.kitchensink.model.Member;
+import com.example.kitchensink.service.MemberRegistration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;

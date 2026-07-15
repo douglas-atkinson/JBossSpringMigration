@@ -14,10 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.as.quickstarts.kitchensink.service;
+package com.example.kitchensink.service;
 
-import org.jboss.as.quickstarts.kitchensink.data.MemberRepository;
-import org.jboss.as.quickstarts.kitchensink.model.Member;
+import com.example.kitchensink.data.MemberRepository;
+import com.example.kitchensink.model.Member;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;

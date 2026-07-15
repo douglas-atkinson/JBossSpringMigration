@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.as.quickstarts.kitchensink.test;
+package com.example.kitchensink.test;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -31,10 +31,10 @@ import java.util.Optional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import org.jboss.as.quickstarts.kitchensink.data.MemberRepository;
-import org.jboss.as.quickstarts.kitchensink.model.Member;
-import org.jboss.as.quickstarts.kitchensink.rest.MemberResourceRESTService;
-import org.jboss.as.quickstarts.kitchensink.service.MemberRegistration;
+import com.example.kitchensink.data.MemberRepository;
+import com.example.kitchensink.model.Member;
+import com.example.kitchensink.rest.MemberResourceRESTService;
+import com.example.kitchensink.service.MemberRegistration;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;

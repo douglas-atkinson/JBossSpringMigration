@@ -14,13 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.as.quickstarts.kitchensink.controller;
+package com.example.kitchensink.controller;
 
 import jakarta.validation.Valid;
 
-import org.jboss.as.quickstarts.kitchensink.data.MemberRepository;
-import org.jboss.as.quickstarts.kitchensink.model.Member;
-import org.jboss.as.quickstarts.kitchensink.service.MemberRegistration;
+import com.example.kitchensink.data.MemberRepository;
+import com.example.kitchensink.model.Member;
+import com.example.kitchensink.service.MemberRegistration;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
