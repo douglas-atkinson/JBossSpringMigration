@@ -54,18 +54,21 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-jpa</artifactId>
+            <artifactId>spring-boot-starter-data-mongodb</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
-        <!-- In-memory database - this quickstart has always used H2 for local/demo purposes only,
-             never a production datasource (see the original kitchensink-quickstart-ds.xml). -->
+        <!-- In-memory, ephemeral MongoDB - this quickstart has always used an embedded database
+             for local/demo purposes only, never a production datasource (previously H2, see the
+             original kitchensink-quickstart-ds.xml). Restores the embedded-Mongo Spring Boot
+             auto-configuration that Spring Boot itself dropped after 2.7. -->
         <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
+            <groupId>de.flapdoodle.embed</groupId>
+            <artifactId>de.flapdoodle.embed.mongo.spring30x</artifactId>
+            <version>4.22.0</version>
         </dependency>
 
         <dependency>

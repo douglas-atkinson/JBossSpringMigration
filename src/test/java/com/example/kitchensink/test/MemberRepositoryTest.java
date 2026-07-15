@@ -23,33 +23,47 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.example.kitchensink.data.MemberRepository;
+import com.example.kitchensink.data.MemberSequenceGenerator;
 import com.example.kitchensink.model.Member;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
+import org.springframework.context.annotation.Import;
 
 /**
- * Characterization tests for {@link MemberRepository}, now a Spring Data JPA repository
- * interface. {@code @DataJpaTest} auto-configures an embedded H2 database and a real
- * implementation of the repository - no Arquillian, no hand-rolled EntityManager bootstrap, no
- * container of any kind.
+ * Characterization tests for {@link MemberRepository}, now a Spring Data MongoDB repository
+ * interface. {@code @DataMongoTest} auto-configures an embedded, ephemeral MongoDB instance (via
+ * de.flapdoodle.embed.mongo.spring30x) and a real implementation of the repository - no
+ * Arquillian, no hand-rolled Mongo client bootstrap, no external container of any kind.
  *
- * <p>Note the behavioral change from the pre-migration version: {@code findByEmail} now returns
- * an empty {@link Optional} for an unknown email instead of throwing JPA's
- * {@code NoResultException} - that exception-based "not found" signal was always a JPA/Hibernate
- * implementation detail, and Spring Data's Optional-based idiom is what
- * {@link MemberResourceRESTService#emailAlreadyExists} now relies on.</p>
+ * <p>{@code findByEmail} returns an empty {@link Optional} for an unknown email, matching the
+ * Spring Data idiom that {@link MemberResourceRESTService#emailAlreadyExists} relies on - this
+ * held true before the Mongo migration (as a Spring Data JPA repository) and still holds now.</p>
+ *
+ * <p>Unlike JPA's identity generation, Mongo's native {@code _id} isn't a sequential number, so
+ * {@code id} is now assigned explicitly before each save - here via a local counter, and in
+ * production via {@link MemberSequenceGenerator} (covered separately below). All test methods
+ * share one embedded Mongo instance for the class, and Mongo enforces a unique index on
+ * {@code _id}, so each saved member needs a distinct id.</p>
  */
-@DataJpaTest
+@DataMongoTest
+@Import(MemberSequenceGenerator.class)
 class MemberRepositoryTest {
+
+    private static final AtomicLong NEXT_TEST_ID = new AtomicLong(1);
 
     @Autowired
     private MemberRepository memberRepository;
 
+    @Autowired
+    private MemberSequenceGenerator sequenceGenerator;
+
     private static Member validMember(String name, String email, String phoneNumber) {
         Member member = new Member();
+        member.setId(NEXT_TEST_ID.getAndIncrement());
         member.setName(name);
         member.setEmail(email);
         member.setPhoneNumber(phoneNumber);
@@ -105,6 +119,16 @@ class MemberRepositoryTest {
 
         assertTrue(abbyIndex < monaIndex, "Abby should be listed before Mona");
         assertTrue(monaIndex < zoeIndex, "Mona should be listed before Zoe");
+    }
+
+    @Test
+    void sequenceGenerator_assignsStrictlyIncreasingIds() {
+        long first = sequenceGenerator.nextId();
+        long second = sequenceGenerator.nextId();
+        long third = sequenceGenerator.nextId();
+
+        assertTrue(second > first, "second id should be greater than first");
+        assertTrue(third > second, "third id should be greater than second");
     }
 
     private static int indexOfEmail(List<Member> members, String email) {

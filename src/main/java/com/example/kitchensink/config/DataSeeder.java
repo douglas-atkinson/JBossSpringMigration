@@ -14,32 +14,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.example.kitchensink.service;
+package com.example.kitchensink.config;
 
 import com.example.kitchensink.data.MemberRepository;
-import com.example.kitchensink.data.MemberSequenceGenerator;
 import com.example.kitchensink.model.Member;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.stereotype.Component;
 
-@Service
-public class MemberRegistration {
-
-    private static final Logger log = LoggerFactory.getLogger(MemberRegistration.class);
+/**
+ * Seeds the same demo member the original {@code import.sql} loaded on every startup. There's no
+ * Mongo equivalent of Hibernate's SQL-import mechanism, and the embedded Mongo instance is
+ * ephemeral per run anyway, so this runs unconditionally on every startup against an empty
+ * collection.
+ */
+@Component
+public class DataSeeder implements CommandLineRunner {
 
     private final MemberRepository memberRepository;
 
-    private final MemberSequenceGenerator sequenceGenerator;
-
-    public MemberRegistration(MemberRepository memberRepository, MemberSequenceGenerator sequenceGenerator) {
+    public DataSeeder(MemberRepository memberRepository) {
         this.memberRepository = memberRepository;
-        this.sequenceGenerator = sequenceGenerator;
     }
 
-    public void register(Member member) {
-        log.info("Registering {}", member.getName());
-        member.setId(sequenceGenerator.nextId());
-        memberRepository.save(member);
+    @Override
+    public void run(String... args) {
+        if (memberRepository.count() == 0) {
+            Member member = new Member();
+            member.setId(0L);
+            member.setName("John Smith");
+            member.setEmail("john.smith@mailinator.com");
+            member.setPhoneNumber("2125551212");
+            memberRepository.save(member);
+        }
     }
 }

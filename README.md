@@ -3,12 +3,17 @@
 A Spring Boot 3.5 / Java 21 migration of the original JBoss EAP "kitchensink"
 quickstart. It's a small member-registration application: a web form backed by
 Spring MVC/Thymeleaf, a REST API backed by Spring Web, and persistence via
-Spring Data JPA against an in-memory H2 database.
+Spring Data MongoDB against an embedded, ephemeral MongoDB instance.
 
 ## Prerequisites
 
 - JDK 21+
 - Maven 3.9+ (no wrapper is checked in; use a locally installed `mvn`)
+
+No MongoDB installation is required — an embedded `mongod` binary is
+downloaded and started automatically (via
+`de.flapdoodle.embed.mongo.spring30x`) for both running the app and running
+the test suite.
 
 ## Building
 
@@ -16,8 +21,8 @@ Spring Data JPA against an in-memory H2 database.
 mvn clean package
 ```
 
-This compiles the app, runs the unit/`@WebMvcTest`/`@DataJpaTest` test suite, and
-produces an executable jar at `target/kitchensink-8.0.0.GA.jar`.
+This compiles the app, runs the unit/`@WebMvcTest`/`@DataMongoTest` test
+suite, and produces an executable jar at `target/kitchensink-8.0.0.GA.jar`.
 
 ## Running
 
@@ -41,8 +46,8 @@ registration page is at:
 http://localhost:8080/kitchensink/
 ```
 
-It uses an in-memory H2 database that's recreated (schema + seed data) on every
-startup — no external database setup is required.
+It uses an embedded, ephemeral MongoDB instance that's recreated (with seed
+data) on every startup — no external database setup is required.
 
 ## Testing
 
@@ -110,13 +115,13 @@ src/main/java/com/example/kitchensink/
   controller/                   Spring MVC controller for the web UI
   rest/                         Spring Web REST controller (JSON API)
   service/                      Registration business logic
-  data/                         Spring Data JPA repository
-  model/                        JPA entity + Bean Validation constraints
+  data/                         Spring Data MongoDB repository + id sequence generator
+  model/                        Mongo document + Bean Validation constraints
+  config/                       Startup seed data
 src/main/resources/
   templates/                    Thymeleaf views
   static/css/                   Stylesheet for the web UI
-  application.properties        Server, datasource, and JPA configuration
-  import.sql                    Seed data loaded on startup
+  application.properties        Server and MongoDB configuration
 ```
 
 ## Configuration
@@ -125,6 +130,10 @@ Key settings live in `src/main/resources/application.properties`:
 
 - `server.servlet.context-path=/kitchensink` — matches the original
   deployment's context path.
-- `spring.datasource.*` — in-memory H2, recreated on every startup
-  (`spring.jpa.hibernate.ddl-auto=create-drop`); not intended for production
-  use.
+- `spring.data.mongodb.*` / `de.flapdoodle.mongodb.embedded.version` — an
+  embedded, ephemeral MongoDB instance, recreated on every startup; not
+  intended for production use.
+- Member ids stay numeric (`Long`), matching the original REST API contract:
+  since MongoDB's native `_id` is an ObjectId rather than a sequential number,
+  `MemberSequenceGenerator` emulates auto-increment via an atomic counter
+  document.
