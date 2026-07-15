@@ -3,17 +3,22 @@
 A Spring Boot 3.5 / Java 21 migration of the original JBoss EAP "kitchensink"
 quickstart. It's a small member-registration application: a web form backed by
 Spring MVC/Thymeleaf, a REST API backed by Spring Web, and persistence via
-Spring Data MongoDB against an embedded, ephemeral MongoDB instance.
+Spring Data MongoDB against a local MongoDB instance.
 
 ## Prerequisites
 
 - JDK 21+
 - Maven 3.9+ (no wrapper is checked in; use a locally installed `mvn`)
+- A MongoDB instance running locally on the default port (`localhost:27017`,
+  no auth) — see [Configuration](#configuration) to point at a different
+  host/port/database. If it's unreachable at startup, the app fails fast
+  (within a few seconds, not the driver's default 30s) with a clear error
+  instead of starting up in a broken state.
 
-No MongoDB installation is required — an embedded `mongod` binary is
-downloaded and started automatically (via
-`de.flapdoodle.embed.mongo.spring30x`) for both running the app and running
-the test suite.
+The test suite doesn't need this: it runs against an embedded, ephemeral
+MongoDB instance (via `de.flapdoodle.embed.mongo.spring30x`, test-scope only)
+that's started and torn down automatically, so `mvn test` needs nothing
+installed.
 
 ## Building
 
@@ -46,8 +51,29 @@ registration page is at:
 http://localhost:8080/kitchensink/
 ```
 
-It uses an embedded, ephemeral MongoDB instance that's recreated (with seed
-data) on every startup — no external database setup is required.
+It connects to the local MongoDB instance described in
+[Prerequisites](#prerequisites) and seeds one demo member the first time the
+`member` collection is empty — unlike the old in-memory setup, data now
+persists across restarts, so the seed only happens once.
+
+If no MongoDB instance is reachable, the app fails to start with a short,
+readable error instead of a raw driver stack trace (`MongoConnectionFailureAnalyzer`
+in the config package handles this):
+
+```
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+Could not connect to MongoDB: Timed out while waiting for a server that matches WritableServerSelector...
+
+Action:
+
+Make sure a local MongoDB instance is installed and running, and that spring.data.mongodb.host/port
+in application.properties match its address (defaults to localhost:27017).
+```
 
 ## Testing
 
@@ -117,11 +143,14 @@ src/main/java/com/example/kitchensink/
   service/                      Registration business logic
   data/                         Spring Data MongoDB repository + id sequence generator
   model/                        Mongo document + Bean Validation constraints
-  config/                       Startup seed data
+  config/                       Startup seed data, Mongo timeout/error-message tuning
 src/main/resources/
   templates/                    Thymeleaf views
   static/css/                   Stylesheet for the web UI
   application.properties        Server and MongoDB configuration
+  META-INF/spring.factories     Registers MongoConnectionFailureAnalyzer
+src/test/resources/
+  application.properties        Overrides connection settings for the embedded-Mongo test slice
 ```
 
 ## Configuration
@@ -130,9 +159,15 @@ Key settings live in `src/main/resources/application.properties`:
 
 - `server.servlet.context-path=/kitchensink` — matches the original
   deployment's context path.
-- `spring.data.mongodb.*` / `de.flapdoodle.mongodb.embedded.version` — an
-  embedded, ephemeral MongoDB instance, recreated on every startup; not
-  intended for production use.
+- `spring.data.mongodb.host` / `.port` / `.database` — the local MongoDB
+  instance the running app connects to (defaults to `localhost:27017`, no
+  auth); not intended for production use as-is.
+- `de.flapdoodle.mongodb.embedded.version` — only read when
+  `de.flapdoodle.embed.mongo.spring30x` is on the classpath, which is
+  test-scope only (see `pom.xml`); picks the embedded MongoDB version used by
+  the `@DataMongoTest` slice. `src/test/resources/application.properties`
+  overrides the real host/port for tests so they never touch your local
+  instance.
 - Member ids stay numeric (`Long`), matching the original REST API contract:
   since MongoDB's native `_id` is an ObjectId rather than a sequential number,
   `MemberSequenceGenerator` emulates auto-increment via an atomic counter

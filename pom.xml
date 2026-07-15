@@ -61,14 +61,16 @@
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
-        <!-- In-memory, ephemeral MongoDB - this quickstart has always used an embedded database
-             for local/demo purposes only, never a production datasource (previously H2, see the
-             original kitchensink-quickstart-ds.xml). Restores the embedded-Mongo Spring Boot
-             auto-configuration that Spring Boot itself dropped after 2.7. -->
+        <!-- Embedded, ephemeral MongoDB - test-scope only. The running app now connects to a real
+             local MongoDB instance (see application.properties); this dependency just backs the
+             @DataMongoTest slice so the test suite still needs no external database of its own.
+             Restores the embedded-Mongo Spring Boot auto-configuration that Spring Boot itself
+             dropped after 2.7. -->
         <dependency>
             <groupId>de.flapdoodle.embed</groupId>
             <artifactId>de.flapdoodle.embed.mongo.spring30x</artifactId>
             <version>4.22.0</version>
+            <scope>test</scope>
         </dependency>
 
         <dependency>
